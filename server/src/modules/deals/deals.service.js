@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Deal from './deals.model.js';
 import Client from '../clients/clients.model.js';
 import User from '../users/users.model.js';
@@ -76,20 +77,59 @@ export async function getDealsPaginated({ userId, stage, page = 1, limit = 20 } 
   };
 }
 
-/** Kanban column feed: one stage per request, hasMore without full collection count. */
-export async function getDealsKanbanStage({ userId, stage, page = 1, limit = 20 }) {
+const KANBAN_SORT = { createdAt: -1, _id: -1 };
+
+function parseKanbanAfter(after) {
+  if (!after || typeof after !== 'string') return null;
+  const sep = after.lastIndexOf('|');
+  if (sep <= 0) return null;
+
+  const createdAt = new Date(after.slice(0, sep));
+  const id = after.slice(sep + 1);
+  if (Number.isNaN(createdAt.getTime()) || !mongoose.isValidObjectId(id)) {
+    return null;
+  }
+
+  return { createdAt, _id: new mongoose.Types.ObjectId(id) };
+}
+
+function withKanbanCursor(filter, after) {
+  const cursor = parseKanbanAfter(after);
+  if (!cursor) return filter;
+
+  const cursorFilter = {
+    $or: [
+      { createdAt: { $lt: cursor.createdAt } },
+      { createdAt: cursor.createdAt, _id: { $lt: cursor._id } },
+    ],
+  };
+
+  return Object.keys(filter).length
+    ? { $and: [filter, cursorFilter] }
+    : cursorFilter;
+}
+
+/** Kanban column feed: cursor (`after`) or page; stable sort prevents overlapping pages. */
+export async function getDealsKanbanStage({
+  userId,
+  stage,
+  page = 1,
+  limit = 20,
+  after,
+} = {}) {
   if (!stage) {
     throw new AppError('stage query parameter is required', 400);
   }
 
-  const filter = buildDealsFilter({ userId, stage });
-  const skip = (page - 1) * limit;
+  const baseFilter = buildDealsFilter({ userId, stage });
+  const filter = after ? withKanbanCursor(baseFilter, after) : baseFilter;
 
-  const rows = await Deal.find(filter)
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit + 1)
-    .lean();
+  let query = Deal.find(filter).sort(KANBAN_SORT).limit(limit + 1);
+  if (!after && page > 1) {
+    query = query.skip((page - 1) * limit);
+  }
+
+  const rows = await query.lean();
 
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;

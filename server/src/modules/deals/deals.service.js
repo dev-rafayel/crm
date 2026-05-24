@@ -79,28 +79,11 @@ export async function getDealsPaginated({ userId, stage, page = 1, limit = 20 } 
 
 const KANBAN_SORT = { createdAt: -1, _id: -1 };
 
-function parseKanbanAfter(after) {
-  if (!after || typeof after !== 'string') return null;
-  const sep = after.lastIndexOf('|');
-  if (sep <= 0) return null;
-
-  const createdAt = new Date(after.slice(0, sep));
-  const id = after.slice(sep + 1);
-  if (Number.isNaN(createdAt.getTime()) || !mongoose.isValidObjectId(id)) {
-    return null;
-  }
-
-  return { createdAt, _id: new mongoose.Types.ObjectId(id) };
-}
-
-function withKanbanCursor(filter, after) {
-  const cursor = parseKanbanAfter(after);
-  if (!cursor) return filter;
-
+function withKanbanAnchor(filter, anchor) {
   const cursorFilter = {
     $or: [
-      { createdAt: { $lt: cursor.createdAt } },
-      { createdAt: cursor.createdAt, _id: { $lt: cursor._id } },
+      { createdAt: { $lt: anchor.createdAt } },
+      { createdAt: anchor.createdAt, _id: { $lt: anchor._id } },
     ],
   };
 
@@ -109,23 +92,50 @@ function withKanbanCursor(filter, after) {
     : cursorFilter;
 }
 
-/** Kanban column feed: cursor (`after`) or page; stable sort prevents overlapping pages. */
+async function resolveKanbanAnchor(baseFilter, { afterId }) {
+  if (!afterId || !mongoose.isValidObjectId(afterId)) {
+    return null;
+  }
+
+  const anchor = await Deal.findOne({
+    ...baseFilter,
+    _id: new mongoose.Types.ObjectId(afterId),
+  })
+    .select({ createdAt: 1, _id: 1 })
+    .lean();
+
+  if (!anchor?.createdAt || !anchor._id) {
+    return null;
+  }
+
+  return { createdAt: anchor.createdAt, _id: anchor._id };
+}
+
+/** Kanban column feed: cursor (`afterId`) or page; stable sort prevents overlapping pages. */
 export async function getDealsKanbanStage({
   userId,
   stage,
   page = 1,
   limit = 20,
-  after,
+  afterId,
 } = {}) {
   if (!stage) {
     throw new AppError('stage query parameter is required', 400);
   }
 
   const baseFilter = buildDealsFilter({ userId, stage });
-  const filter = after ? withKanbanCursor(baseFilter, after) : baseFilter;
+  let filter = baseFilter;
+
+  if (afterId) {
+    const anchor = await resolveKanbanAnchor(baseFilter, { afterId });
+    if (!anchor) {
+      throw new AppError('Invalid kanban cursor', 400);
+    }
+    filter = withKanbanAnchor(baseFilter, anchor);
+  }
 
   let query = Deal.find(filter).sort(KANBAN_SORT).limit(limit + 1);
-  if (!after && page > 1) {
+  if (!afterId && page > 1) {
     query = query.skip((page - 1) * limit);
   }
 

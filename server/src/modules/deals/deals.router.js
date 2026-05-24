@@ -31,7 +31,7 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
       stage,
       page,
       limit,
-      after: req.query.after,
+      afterId: req.query.afterId,
     });
     res.json({ success: true, data: result });
     return;

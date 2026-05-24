@@ -54,6 +54,7 @@ export default function Customers() {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 400);
@@ -146,18 +147,27 @@ export default function Customers() {
     }
   }
 
-  async function handleBulkDelete() {
+  function openDeleteModal() {
     if (!isAdmin || selected.length === 0) return;
-    if (!window.confirm(`Delete ${selected.length} selected client(s)?`)) return;
+    setDeleteModal({ type: 'confirm', count: selected.length });
+  }
+
+  function closeDeleteModal() {
+    if (!deleting) setDeleteModal(null);
+  }
+
+  async function confirmBulkDelete() {
+    if (!isAdmin || selected.length === 0 || deleteModal?.type !== 'confirm') return;
 
     setDeleting(true);
     try {
       await Promise.all(selected.map((id) => deleteClient(id)));
       setSelected([]);
+      setDeleteModal(null);
       await loadClients(currentPage);
     } catch (err) {
       console.error(err);
-      window.alert(formatError(err));
+      setDeleteModal({ type: 'error', message: formatError(err) });
     } finally {
       setDeleting(false);
     }
@@ -235,7 +245,7 @@ export default function Customers() {
             type="button"
             className="crm-btn-danger"
             style={styles.btnDanger}
-            onClick={handleBulkDelete}
+            onClick={openDeleteModal}
             disabled={deleting}
           >
             {deleting ? 'Deleting…' : `${selected.length} selected — delete`}
@@ -349,6 +359,87 @@ export default function Customers() {
           loading={listLoading}
         />
       </div>
+
+      {deleteModal && (
+        <div style={styles.overlay} role="presentation" onClick={closeDeleteModal}>
+          <div
+            style={{ ...styles.modal, maxWidth: 420 }}
+            role="alertdialog"
+            aria-labelledby="delete-clients-title"
+            aria-describedby="delete-clients-desc"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: deleteModal.type === 'error' ? '#FEF2F2' : '#FEF2F2',
+                color: '#DC2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 22,
+                marginBottom: 16,
+              }}
+            >
+              {deleteModal.type === 'error' ? '!' : '🗑'}
+            </div>
+
+            <h2 id="delete-clients-title" style={styles.modalTitle}>
+              {deleteModal.type === 'error'
+                ? 'Could not delete'
+                : 'Delete customers?'}
+            </h2>
+
+            <p id="delete-clients-desc" style={styles.modalDesc}>
+              {deleteModal.type === 'error'
+                ? deleteModal.message
+                : deleteModal.count === 1
+                  ? 'This customer and their data will be removed permanently. This cannot be undone.'
+                  : `${deleteModal.count} customers will be removed permanently. This cannot be undone.`}
+            </p>
+
+            <div style={styles.modalActions}>
+              {deleteModal.type === 'error' ? (
+                <button
+                  type="button"
+                  className="crm-btn-primary"
+                  style={styles.btnPrimary}
+                  onClick={closeDeleteModal}
+                >
+                  OK
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="crm-btn-secondary"
+                    style={styles.btnSecondary}
+                    onClick={closeDeleteModal}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="crm-btn-danger"
+                    style={{
+                      ...styles.btnDangerSolid,
+                      opacity: deleting ? 0.7 : 1,
+                      cursor: deleting ? 'not-allowed' : 'pointer',
+                    }}
+                    onClick={confirmBulkDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? 'Deleting…' : 'Delete'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {modalOpen && (
         <div style={styles.overlay} role="presentation" onClick={closeModal}>

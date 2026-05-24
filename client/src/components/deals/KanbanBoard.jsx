@@ -2,6 +2,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   forwardRef,
   useImperativeHandle,
 } from 'react';
@@ -14,6 +15,9 @@ import {
   KANBAN_STAGES,
   createInitialBoardData,
   getDealId,
+  getColumnCursorId,
+  appendUniqueDeals,
+  dedupeDeals,
   colTotal,
 } from './kanbanBoard.js';
 
@@ -25,25 +29,28 @@ const KanbanBoard = forwardRef(function KanbanBoard(
   const [loading, setLoading] = useState(true);
   const [dragging, setDragging] = useState(null);
   const [dragOver, setDragOver] = useState(null);
+  const loadingMoreStagesRef = useRef(new Set());
 
-  const fetchStagePage = useCallback(async (stage, page) => {
-    const { deals, hasMore } = await getKanbanDealsByStage(stage, { page });
-    return { deals, hasMore, page };
+  const fetchStagePage = useCallback(async (stage, { page = 1, afterId } = {}) => {
+    const { deals, hasMore } = await getKanbanDealsByStage(stage, { page, afterId });
+    return { deals, hasMore };
   }, []);
 
   const loadInitialBoard = useCallback(async () => {
     setLoading(true);
     try {
       const results = await Promise.all(
-        KANBAN_STAGES.map((stage) => fetchStagePage(stage, 1)),
+        KANBAN_STAGES.map((stage) => fetchStagePage(stage, { page: 1 })),
       );
 
       const next = createInitialBoardData();
       KANBAN_STAGES.forEach((stage, index) => {
-        const { deals, hasMore, page } = results[index];
+        const { deals, hasMore } = results[index];
+        const items = dedupeDeals(deals);
+        const last = items[items.length - 1];
         next[stage] = {
-          items: deals,
-          page,
+          items,
+          cursorId: getColumnCursorId(last),
           hasMore,
           loading: false,
           loadingMore: false,
@@ -100,40 +107,52 @@ const KanbanBoard = forwardRef(function KanbanBoard(
   ]);
 
   const handleLoadMore = useCallback(async (stage) => {
+    if (loadingMoreStagesRef.current.has(stage)) return;
+
+    let afterId = null;
+
     setBoardData((prev) => {
       const col = prev[stage];
-      if (!col.hasMore || col.loadingMore) {
+      if (!col.hasMore || col.loadingMore || !col.cursorId) {
         return prev;
       }
-
-      const nextPage = col.page + 1;
-
-      getKanbanDealsByStage(stage, { page: nextPage })
-        .then(({ deals, hasMore }) => {
-          setBoardData((current) => ({
-            ...current,
-            [stage]: {
-              ...current[stage],
-              items: [...current[stage].items, ...deals],
-              page: nextPage,
-              hasMore,
-              loadingMore: false,
-            },
-          }));
-        })
-        .catch((err) => {
-          console.error(err);
-          setBoardData((current) => ({
-            ...current,
-            [stage]: { ...current[stage], loadingMore: false },
-          }));
-        });
-
+      afterId = col.cursorId;
       return {
         ...prev,
         [stage]: { ...col, loadingMore: true },
       };
     });
+
+    if (!afterId) return;
+
+    loadingMoreStagesRef.current.add(stage);
+
+    try {
+      const { deals, hasMore } = await getKanbanDealsByStage(stage, { afterId });
+      setBoardData((current) => {
+        const col = current[stage];
+        const items = appendUniqueDeals(col.items, deals);
+        const last = items[items.length - 1];
+        return {
+          ...current,
+          [stage]: {
+            ...col,
+            items,
+            cursorId: getColumnCursorId(last),
+            hasMore,
+            loadingMore: false,
+          },
+        };
+      });
+    } catch (err) {
+      console.error(err);
+      setBoardData((current) => ({
+        ...current,
+        [stage]: { ...current[stage], loadingMore: false },
+      }));
+    } finally {
+      loadingMoreStagesRef.current.delete(stage);
+    }
   }, []);
 
   const handleDragStart = (dealId, fromCol) => setDragging({ dealId, fromCol });

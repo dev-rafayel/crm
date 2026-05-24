@@ -33,13 +33,20 @@ export async function getDeals(stage, all = false, { page = 1, limit = 20 } = {}
 
 const KANBAN_PAGE_SIZE = 20;
 
-export async function getKanbanDealsByStage(stage, { page = 1, limit = KANBAN_PAGE_SIZE } = {}) {
+export async function getKanbanDealsByStage(
+  stage,
+  { page = 1, limit = KANBAN_PAGE_SIZE, afterId } = {},
+) {
   const params = new URLSearchParams({
     kanban: 'true',
     stage,
-    page: String(page),
     limit: String(limit),
   });
+  if (afterId) {
+    params.set('afterId', afterId);
+  } else {
+    params.set('page', String(page));
+  }
   const data = await apiRequest(`/deals?${params}`);
   const payload = data?.deals ? data : { stage, deals: Array.isArray(data) ? data : [], hasMore: false };
 

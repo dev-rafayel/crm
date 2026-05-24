@@ -1,0 +1,13 @@
+@media (max-width: 768px) {
+  .auth-brand {
+    display: none !important;
+  }
+
+  .auth-mobile-logo {
+    display: block !important;
+  }
+
+  .auth-page {
+    flex-direction: column;
+  }
+}

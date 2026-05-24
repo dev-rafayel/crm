@@ -86,6 +86,7 @@ export default function Team() {
   const [role, setRole] = useState('staff');
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(null);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -147,21 +148,39 @@ export default function Team() {
     }
   }
 
-  async function handleDeleteMember(member) {
+  function openDeleteModal(member) {
     if (!isAdmin) return;
     if (member.id === currentUserId) {
-      window.alert('You cannot delete your own account.');
+      setDeleteModal({
+        type: 'error',
+        title: 'Action not allowed',
+        message: 'You cannot delete your own account.',
+      });
       return;
     }
-    if (!window.confirm(`Remove employee "${member.name}"?`)) return;
+    setDeleteModal({ type: 'confirm', member });
+  }
 
+  function closeDeleteModal() {
+    if (!deleting) setDeleteModal(null);
+  }
+
+  async function confirmDeleteMember() {
+    if (!isAdmin || deleteModal?.type !== 'confirm') return;
+
+    const { member } = deleteModal;
     setDeleting(true);
     try {
       await usersApi.deleteUser(member.id);
+      setDeleteModal(null);
       await loadTeamData();
     } catch (err) {
       console.error(err);
-      window.alert(formatError(err));
+      setDeleteModal({
+        type: 'error',
+        title: 'Could not delete',
+        message: formatError(err),
+      });
     } finally {
       setDeleting(false);
     }
@@ -283,7 +302,7 @@ export default function Team() {
                           className="crm-btn-ghost"
                           style={styles.deleteBtn}
                           disabled={deleting}
-                          onClick={() => handleDeleteMember(member)}
+                          onClick={() => openDeleteModal(member)}
                         >
                           Delete
                         </button>
@@ -339,6 +358,85 @@ export default function Team() {
             )}
           </div>
         </section>
+      )}
+
+      {deleteModal && (
+        <div style={styles.overlay} role="presentation" onClick={closeDeleteModal}>
+          <div
+            style={styles.modal}
+            role="alertdialog"
+            aria-labelledby="delete-member-title"
+            aria-describedby="delete-member-desc"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: '#FEF2F2',
+                color: '#DC2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 22,
+                marginBottom: 16,
+              }}
+            >
+              {deleteModal.type === 'error' ? '!' : '🗑'}
+            </div>
+
+            <h2 id="delete-member-title" style={styles.modalTitle}>
+              {deleteModal.type === 'error'
+                ? deleteModal.title
+                : 'Remove employee?'}
+            </h2>
+
+            <p id="delete-member-desc" style={styles.modalDesc}>
+              {deleteModal.type === 'error'
+                ? deleteModal.message
+                : `"${deleteModal.member.name}" will be removed from the team permanently. This cannot be undone.`}
+            </p>
+
+            <div style={styles.modalActions}>
+              {deleteModal.type === 'error' ? (
+                <button
+                  type="button"
+                  className="crm-btn-primary"
+                  style={styles.btnPrimary}
+                  onClick={closeDeleteModal}
+                >
+                  OK
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="crm-btn-secondary"
+                    style={styles.btnSecondary}
+                    onClick={closeDeleteModal}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="crm-btn-danger"
+                    style={{
+                      ...styles.btnDangerSolid,
+                      opacity: deleting ? 0.7 : 1,
+                      cursor: deleting ? 'not-allowed' : 'pointer',
+                    }}
+                    onClick={confirmDeleteMember}
+                    disabled={deleting}
+                  >
+                    {deleting ? 'Deleting…' : 'Delete'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {modalOpen && isAdmin && (

@@ -227,6 +227,28 @@ const styles = {
     maxWidth: 420,
     boxShadow: '0 16px 48px rgba(15, 23, 42, 0.12)',
   },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 600,
+    color: '#0F172A',
+    margin: '0 0 8px',
+  },
+  modalDesc: {
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 1.55,
+    margin: '0 0 20px',
+  },
+  btnDangerSolid: {
+    padding: '10px 16px',
+    fontSize: 14,
+    fontWeight: 500,
+    background: '#DC2626',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 8,
+    cursor: 'pointer',
+  },
   field: { marginBottom: 16 },
   label: {
     display: 'block',

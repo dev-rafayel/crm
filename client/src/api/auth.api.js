@@ -53,6 +53,19 @@ export async function resetPasswordWithCode({ email, code, password }) {
   return json.message;
 }
 
+export async function verifyPasswordResetCode({ email, code }) {
+  const res = await fetch(`${API_URL}/auth/verify-reset-code`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: email.trim(),
+      code: String(code).trim(),
+    }),
+  });
+  const json = await parsePublicAuthResponse(res);
+  return json.message;
+}
+
 export async function getMe() {
   return apiRequest('/auth/me');
 }

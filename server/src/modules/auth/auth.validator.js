@@ -57,3 +57,13 @@ export const resetPasswordSchema = z.object({
     password: z.string().min(8, 'Password must be at least 8 characters'),
   }),
 });
+
+export const verifyPasswordResetCodeSchema = z.object({
+  body: z.object({
+    email: z.string().trim().email(),
+    code: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/, 'Verification code must be 6 digits'),
+  }),
+});

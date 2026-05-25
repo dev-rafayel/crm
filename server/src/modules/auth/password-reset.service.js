@@ -23,10 +23,7 @@ export async function requestPasswordResetCode(email) {
   const normalizedEmail = normalizeEmail(email);
   const user = await findUserByEmail(normalizedEmail, { withPassword: true });
 
-  const canReset =
-    user &&
-    user.status === UserStatuses.ACTIVE &&
-    user.password;
+  const canReset = user && user.status === UserStatuses.ACTIVE && user.password;
 
   if (canReset) {
     const code = generateCode();
@@ -56,6 +53,29 @@ export async function requestPasswordResetCode(email) {
     message:
       'If an account exists for this email, a verification code has been sent.',
   };
+}
+
+export async function verifyPasswordResetCode({ email, code }) {
+  const normalizedEmail = normalizeEmail(email);
+  const reset = await PasswordReset.findOne({ email: normalizedEmail });
+
+  if (!reset || reset.expiresAt <= new Date()) {
+    throw new AppError('Invalid or expired verification code', 400);
+  }
+
+  if (reset.attempts >= MAX_ATTEMPTS) {
+    await PasswordReset.deleteOne({ _id: reset._id });
+    throw new AppError('Too many attempts. Request a new code.', 429);
+  }
+
+  const codeHash = hashCode(String(code).trim(), normalizedEmail);
+  if (codeHash !== reset.codeHash) {
+    reset.attempts += 1;
+    await reset.save();
+    throw new AppError('Invalid verification code', 400);
+  }
+
+  return { message: 'Verification code is valid' };
 }
 
 export async function resetPasswordWithCode({ email, code, password }) {

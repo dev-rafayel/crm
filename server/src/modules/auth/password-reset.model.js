@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
-const RESET_CODE_TTL_MS = 15 * 60 * 1000;
+const RESET_CODE_TTL_MS = 2 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
 const passwordResetSchema = new Schema(

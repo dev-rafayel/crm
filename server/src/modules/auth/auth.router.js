@@ -10,6 +10,7 @@ import {
   registerByInviteSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  verifyPasswordResetCodeSchema,
 } from './auth.validator.js';
 import * as authService from './auth.service.js';
 import * as inviteService from './invite.service.js';
@@ -19,7 +20,10 @@ import { RoleNames } from '../../constants.js';
 
 const router = Router();
 
-router.post('/login', validate(loginSchema), asyncHandler(async (req, res) => {
+router.post(
+  '/login',
+  validate(loginSchema),
+  asyncHandler(async (req, res) => {
     try {
       const data = await authService.login(req.body.email, req.body.password);
       res.json({ success: true, data });
@@ -32,7 +36,10 @@ router.post('/login', validate(loginSchema), asyncHandler(async (req, res) => {
   }),
 );
 
-router.post('/refresh', validate(refreshSchema), asyncHandler(async (req, res) => {
+router.post(
+  '/refresh',
+  validate(refreshSchema),
+  asyncHandler(async (req, res) => {
     try {
       const data = await authService.refresh(req.body.refreshToken);
       res.json({ success: true, data });
@@ -42,7 +49,10 @@ router.post('/refresh', validate(refreshSchema), asyncHandler(async (req, res) =
   }),
 );
 
-router.post('/logout', validate(logoutSchema), asyncHandler(async (req, res) => {
+router.post(
+  '/logout',
+  validate(logoutSchema),
+  asyncHandler(async (req, res) => {
     try {
       await authService.logout(req.body.refreshToken);
       res.json({ success: true, message: 'Logged out' });
@@ -52,7 +62,10 @@ router.post('/logout', validate(logoutSchema), asyncHandler(async (req, res) => 
   }),
 );
 
-router.get('/me', authenticate, asyncHandler(async (req, res) => {
+router.get(
+  '/me',
+  authenticate,
+  asyncHandler(async (req, res) => {
     try {
       const user = await authService.getMe(req.user.id);
       res.json({ success: true, data: user });
@@ -104,7 +117,9 @@ router.post(
   '/forgot-password',
   validate(forgotPasswordSchema),
   asyncHandler(async (req, res) => {
-    const data = await passwordResetService.requestPasswordResetCode(req.body.email);
+    const data = await passwordResetService.requestPasswordResetCode(
+      req.body.email,
+    );
     res.json({ success: true, message: data.message });
   }),
 );
@@ -114,6 +129,15 @@ router.post(
   validate(resetPasswordSchema),
   asyncHandler(async (req, res) => {
     const data = await passwordResetService.resetPasswordWithCode(req.body);
+    res.json({ success: true, message: data.message });
+  }),
+);
+
+router.post(
+  '/verify-reset-code',
+  validate(verifyPasswordResetCodeSchema),
+  asyncHandler(async (req, res) => {
+    const data = await passwordResetService.verifyPasswordResetCode(req.body);
     res.json({ success: true, message: data.message });
   }),
 );

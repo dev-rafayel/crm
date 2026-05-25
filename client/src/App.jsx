@@ -7,6 +7,8 @@ import ClientDetail from './components/clients/ClientDetail.jsx';
 import Deals from './components/deals/deal.jsx';
 import AuthPage from './components/auth/AuthPage.jsx';
 import ForgotPassword from './components/auth/ForgotPassword.jsx';
+import ForgotPasswordVerify from './components/auth/ForgotPasswordVerify.jsx';
+import ResetPassword from './components/auth/ResetPassword.jsx';
 import RegisterByInvite from './components/auth/RegisterByInvite.jsx';
 import Profile from './components/user/Profile.jsx';
 import Team from './components/team/Team.jsx';
@@ -81,7 +83,13 @@ const teamNavItem = {
   icon: (
     <svg viewBox="0 0 16 16" fill="none" width="15" height="15">
       <circle cx="5.5" cy="5" r="2.2" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="10.5" cy="5" r="2.2" stroke="currentColor" strokeWidth="1.2" />
+      <circle
+        cx="10.5"
+        cy="5"
+        r="2.2"
+        stroke="currentColor"
+        strokeWidth="1.2"
+      />
       <path
         d="M1.5 13.5c0-2.2 1.8-4 4-4M10.5 9.5c2.2 0 4 1.8 4 4"
         stroke="currentColor"
@@ -207,6 +215,11 @@ export default function App() {
     <Routes>
       <Route path="/register-by-invite" element={<RegisterByInvite />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route
+        path="/forgot-password/verify"
+        element={<ForgotPasswordVerify />}
+      />
+      <Route path="/forgot-password/reset" element={<ResetPassword />} />
       <Route
         path="/login"
         element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />}

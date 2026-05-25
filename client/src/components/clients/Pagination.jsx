@@ -38,7 +38,7 @@ function buildPageItems(currentPage, totalPages) {
 export default function Pagination({ pagination, onPageChange, loading }) {
   const { currentPage, totalPages, totalItems } = pagination;
 
-  if (!totalItems) return null;
+  if (!totalItems || totalPages <= 1) return null;
 
   const items = buildPageItems(currentPage, totalPages);
 
@@ -85,7 +85,9 @@ export default function Pagination({ pagination, onPageChange, loading }) {
         className="crm-btn-secondary"
         style={{
           ...styles.pageBtn,
-          ...(currentPage >= totalPages || loading ? styles.pageBtnDisabled : {}),
+          ...(currentPage >= totalPages || loading
+            ? styles.pageBtnDisabled
+            : {}),
         }}
         disabled={currentPage >= totalPages || loading}
         onClick={() => onPageChange(currentPage + 1)}

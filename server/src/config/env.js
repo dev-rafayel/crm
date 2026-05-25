@@ -17,21 +17,9 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 chars'),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().int().positive().default(587),
-  SMTP_SECURE: z.preprocess(
-    (v) => v === 'true' || v === '1' || v === true,
-    z.boolean().default(false),
-  ),
-  SMTP_USER: z
-    .string()
-    .optional()
-    .transform((v) => v?.trim()),
-  SMTP_PASS: z
-    .string()
-    .optional()
-    .transform((v) => v?.replace(/\s/g, '')),
-  SMTP_FROM: z.string().optional(),
+  // Сделаем ключ опциональным на уровне Zod, чтобы была гибкость
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM: z.string().default('SaleCRM <no-reply@salecrm.com>'),
 });
 
 const parsed = envSchema.safeParse(process.env);

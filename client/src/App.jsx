@@ -6,6 +6,7 @@ import Clients from './components/clients/customers.jsx';
 import ClientDetail from './components/clients/ClientDetail.jsx';
 import Deals from './components/deals/deal.jsx';
 import AuthPage from './components/auth/AuthPage.jsx';
+import ForgotPassword from './components/auth/ForgotPassword.jsx';
 import RegisterByInvite from './components/auth/RegisterByInvite.jsx';
 import Profile from './components/user/Profile.jsx';
 import Team from './components/team/Team.jsx';
@@ -205,6 +206,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/register-by-invite" element={<RegisterByInvite />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route
         path="/login"
         element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />}

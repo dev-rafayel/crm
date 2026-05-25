@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import authStyles from './authStyles.js';
 import './AuthPage.css';
@@ -91,6 +91,15 @@ function LoginForm({ registered, initialEmail = '' }) {
       >
         {submitting ? 'Signing in…' : 'Sign in'}
       </button>
+
+      <p style={{ ...s.hint, marginTop: 12 }}>
+        <Link
+          to="/forgot-password"
+          style={{ color: '#3B82F6', fontWeight: 500, textDecoration: 'none' }}
+        >
+          Forgot password?
+        </Link>
+      </p>
     </form>
   );
 }

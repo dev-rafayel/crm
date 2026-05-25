@@ -2,6 +2,16 @@ import { apiRequest, setTokens, clearTokens } from './client.js';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
+async function parsePublicAuthResponse(res) {
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json.success === false) {
+    const err = new Error(json.message || 'Request failed');
+    err.details = json.details;
+    throw err;
+  }
+  return json;
+}
+
 export async function login(email, password) {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
@@ -9,12 +19,7 @@ export async function login(email, password) {
     body: JSON.stringify({ email, password }),
   });
 
-  const json = await res.json();
-  if (!res.ok || !json.success) {
-    const err = new Error(json.message || 'Login failed');
-    err.details = json.details;
-    throw err;
-  }
+  const json = await parsePublicAuthResponse(res);
 
   setTokens({
     accessToken: json.data.accessToken,
@@ -22,6 +27,30 @@ export async function login(email, password) {
   });
 
   return json.data.user;
+}
+
+export async function requestPasswordReset(email) {
+  const res = await fetch(`${API_URL}/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.trim() }),
+  });
+  const json = await parsePublicAuthResponse(res);
+  return json.message;
+}
+
+export async function resetPasswordWithCode({ email, code, password }) {
+  const res = await fetch(`${API_URL}/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: email.trim(),
+      code: String(code).trim(),
+      password,
+    }),
+  });
+  const json = await parsePublicAuthResponse(res);
+  return json.message;
 }
 
 export async function getMe() {

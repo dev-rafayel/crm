@@ -8,9 +8,12 @@ import {
   logoutSchema,
   inviteSchema,
   registerByInviteSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from './auth.validator.js';
 import * as authService from './auth.service.js';
 import * as inviteService from './invite.service.js';
+import * as passwordResetService from './password-reset.service.js';
 import { AppError } from '../../utils/AppError.js';
 import { RoleNames } from '../../constants.js';
 
@@ -94,6 +97,24 @@ router.post(
       message: 'Account created successfully',
       data: user,
     });
+  }),
+);
+
+router.post(
+  '/forgot-password',
+  validate(forgotPasswordSchema),
+  asyncHandler(async (req, res) => {
+    const data = await passwordResetService.requestPasswordResetCode(req.body.email);
+    res.json({ success: true, message: data.message });
+  }),
+);
+
+router.post(
+  '/reset-password',
+  validate(resetPasswordSchema),
+  asyncHandler(async (req, res) => {
+    const data = await passwordResetService.resetPasswordWithCode(req.body);
+    res.json({ success: true, message: data.message });
   }),
 );
 

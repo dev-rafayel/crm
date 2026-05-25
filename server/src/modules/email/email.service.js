@@ -113,6 +113,73 @@ function buildInviteEmailHtml({ inviteUrl }) {
 </html>`;
 }
 
+function buildPasswordResetEmailHtml({ code }) {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body style="margin:0;padding:0;background:#F8F9FB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:520px;background:#ffffff;border-radius:16px;border:1px solid #E2E8F0;overflow:hidden;">
+          <tr>
+            <td style="padding:32px 32px 24px;background:linear-gradient(145deg,#1E3A8A 0%,#3B82F6 100%);">
+              <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">● SaleCRM</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <h1 style="margin:0 0 12px;font-size:22px;color:#0F172A;">Password reset</h1>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#64748B;">
+                Use this verification code to set a new password. The code expires in 15 minutes.
+              </p>
+              <p style="margin:0 0 8px;font-size:13px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.05em;">Your code</p>
+              <p style="margin:0 0 24px;font-size:32px;font-weight:700;letter-spacing:0.2em;color:#0F172A;">${code}</p>
+              <p style="margin:0;font-size:13px;color:#94A3B8;line-height:1.5;">
+                If you did not request this, you can ignore this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendPasswordResetEmail({ to, code }) {
+  const text = `Your SaleCRM password reset code is: ${code}. It expires in 15 minutes.`;
+  const html = buildPasswordResetEmailHtml({ code });
+
+  const mailOptions = {
+    from: env.SMTP_FROM || `SaleCRM <${env.SMTP_USER}>`,
+    to,
+    subject: 'SaleCRM password reset code',
+    text,
+    html,
+  };
+
+  const transport = await getTransporter();
+
+  try {
+    const info = await transport.sendMail(mailOptions);
+    console.info(`[email] Password reset code sent to ${to} (messageId: ${info.messageId})`);
+    return info;
+  } catch (err) {
+    console.error('[email] Failed to send password reset email:', {
+      to,
+      code: err.code,
+      message: err.message,
+    });
+    throw err;
+  }
+}
+
 export async function sendInviteEmail({ to, token }) {
   const inviteUrl = `${env.CLIENT_URL}/register-by-invite?token=${encodeURIComponent(token)}`;
   const text = `You have been invited to SaleCRM. Complete your registration here: ${inviteUrl}`;

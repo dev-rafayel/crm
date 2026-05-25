@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import styles from './style';
+import { API_URL } from '../config/api'
 
 export default function Dashboard() {
   const [activeMetric, setActiveMetric] = useState(null);
@@ -10,7 +11,7 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        const res = await fetch('/api/dashboard', {
+        const res = await fetch(`${API_URL}/dashboard`, {
           headers: {
             'Content-Type': 'application/json',
             ...(token && { Authorization: `Bearer ${token}` }),

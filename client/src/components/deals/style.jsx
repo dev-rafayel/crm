@@ -13,7 +13,7 @@ const styles = {
     marginBottom: 20,
   },
   heading: { fontSize: 26, fontWeight: 600, color: '#0F172A', margin: 0 },
-  subheading: { fontSize: 13, color: '#94A3B8', margin: '4px 0 0' },
+  subheading: { fontSize: 13, color: '#94A3B8', margin: '4px 10px' },
   btnPrimary: {
     padding: '8px 18px',
     fontSize: 13,
@@ -101,9 +101,15 @@ const styles = {
     fontSize: 13,
     fontWeight: 500,
     color: '#0F172A',
-    margin: '0 0 3px',
+    margin: '0 0 15px',
   },
-  dealCompany: { fontSize: 12, color: '#94A3B8', margin: '0 0 10px' },
+  managerName: { fontSize: 12, color: '#94A3B8', margin: '0 0 6px' },
+  clientName: {
+    fontSize: 12,
+    color: '#94A3B8',
+    margin: '0 0 10px 10px',
+    display: 'block',
+  },
   dealFooter: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -111,6 +117,14 @@ const styles = {
   },
   dealAmount: { fontSize: 14, fontWeight: 700 },
   dealDate: { fontSize: 11, color: '#CBD5E1' },
+  clientName: { 
+    fontSize: 12, 
+    color: '#94A3B8', 
+    margin: '0 0 0 180px',
+    marginTop: -17,
+    marginBottom: 10,
+    display: 'flex',
+  },
   dropZone: {
     border: '2px dashed',
     borderRadius: 10,

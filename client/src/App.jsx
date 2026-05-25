@@ -1,9 +1,18 @@
-import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  Link,
+  useLocation,
+  Navigate,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 import './App.css';
 import './crmInteractions.css';
 import Dashboard from './components/dashboard/board.jsx';
 import Clients from './components/clients/customers.jsx';
 import ClientDetail from './components/clients/ClientDetail.jsx';
+import DealDetail from './components/deals/dealDetail.jsx';
 import Deals from './components/deals/deal.jsx';
 import AuthPage from './components/auth/AuthPage.jsx';
 import ForgotPassword from './components/auth/ForgotPassword.jsx';
@@ -167,6 +176,20 @@ function SidebarContent() {
   );
 }
 
+function DealDetailPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  return (
+    <DealDetail
+      dealId={id}
+      onBack={() => navigate(-1)}
+      onUpdate={() => {}}
+      onDelete={() => navigate('/deals')}
+    />
+  );
+}
+
 function AuthenticatedLayout() {
   return (
     <div style={styles.app}>
@@ -181,6 +204,7 @@ function AuthenticatedLayout() {
           <Route path="/clients" element={<Clients />} />
           <Route path="/clients/:id" element={<ClientDetail />} />
           <Route path="/deals" element={<Deals />} />
+          <Route path="/deals/:id" element={<DealDetailPage />} />
           <Route path="/team" element={<Team />} />
           <Route path="/team/:id" element={<UserDetail />} />
           <Route path="/profile" element={<Profile />} />

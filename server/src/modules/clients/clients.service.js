@@ -14,8 +14,7 @@ function buildClientsMatchStage({ filter, search } = {}) {
   if (search) {
     matchStage.$or = [
       { name: { $regex: search, $options: 'i' } },
-      { company: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
+      { lastName: { $regex: search, $options: 'i' } },
     ];
   }
 
@@ -48,6 +47,7 @@ function clientsListPipeline(matchStage) {
         id: { $toString: '$_id' },
         _id: 0,
         name: 1,
+        lastName: 1,
         company: 1,
         email: 1,
         phone: 1,

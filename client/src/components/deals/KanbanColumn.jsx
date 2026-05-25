@@ -68,7 +68,8 @@ export default function KanbanColumn({
               }}
             >
               <p style={styles.dealName}>{deal.name}</p>
-              <p style={styles.dealCompany}>{deal.managerName || 'Unassigned'}</p>
+              <p style={styles.clientName}>{deal.clientName}</p>
+              <p style={styles.managerName}>{deal.managerName || 'Unassigned'}</p>
               <div style={styles.dealFooter}>
                 <span style={{ ...styles.dealAmount, color }}>
                   {fmt(deal.amount)}

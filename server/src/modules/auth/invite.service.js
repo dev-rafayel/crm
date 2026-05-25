@@ -104,7 +104,7 @@ export async function listPendingInvites() {
     id: invite._id.toString(),
     email: invite.email,
     role: invite.role,
-    expiresAt: invite.expiresAt,
     createdAt: invite.createdAt,
+    expiresAt: invite.expiresAt,
   }));
 }

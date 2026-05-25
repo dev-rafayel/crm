@@ -14,11 +14,11 @@ function managerDisplayName(user) {
 
 async function attachManagerNames(deals) {
   const list = (Array.isArray(deals) ? deals : [deals]).map((d) =>
-    (d?.toObject ? d.toObject() : d),
+    d?.toObject ? d.toObject() : d,
   );
   if (!list.length) return Array.isArray(deals) ? [] : null;
 
-  const ids = [
+  const managerIds = [
     ...new Set(
       list.flatMap((d) => {
         const id = d.managerId || d.createdBy;
@@ -26,19 +26,41 @@ async function attachManagerNames(deals) {
       }),
     ),
   ];
+  const clientIds = [
+    ...new Set(
+      list.flatMap((d) => {
+        return d.clientId ? [d.clientId.toString()] : [];
+      }),
+    ),
+  ];
 
-  const users = ids.length
-    ? await User.find({ _id: { $in: ids } }, { firstName: 1, lastName: 1 }).lean()
-    : [];
-  const byId = new Map(users.map((u) => [u._id.toString(), u]));
+  const [users, clients] = await Promise.all([
+    managerIds.length
+      ? await User.find(
+          { _id: { $in: managerIds } },
+          { firstName: 1, lastName: 1 },
+        ).lean()
+      : [],
+    clientIds.length
+      ? await Client.find({ _id: { $in: clientIds } }, { name: 1 }).lean()
+      : [],
+  ]);
+
+  const usersById = new Map(users.map((u) => [u._id.toString(), u]));
+  const clientsById = new Map(clients.map((c) => [c._id.toString(), c]));
 
   const enriched = list.map((d) => {
     const managerId = d.managerId?.toString?.() || d.createdBy?.toString?.();
-    const user = managerId ? byId.get(managerId) : null;
+    const clientId = d.clientId?.toString?.();
+    const user = managerId ? usersById.get(managerId) : null;
+    const client = clientId ? clientsById.get(clientId) : null;
+
     return {
       ...d,
       managerId,
       managerName: managerDisplayName(user),
+      clientId,
+      clientName: client?.name || d.company || 'Unknown client',
     };
   });
 
@@ -47,7 +69,10 @@ async function attachManagerNames(deals) {
 
 function dealManagerFilter(userId) {
   return {
-    $or: [{ managerId: userId }, { managerId: { $exists: false }, createdBy: userId }],
+    $or: [
+      { managerId: userId },
+      { managerId: { $exists: false }, createdBy: userId },
+    ],
   };
 }
 
@@ -62,7 +87,12 @@ function buildDealsFilter({ userId, stage } = {}) {
   return filter;
 }
 
-export async function getDealsPaginated({ userId, stage, page = 1, limit = 20 } = {}) {
+export async function getDealsPaginated({
+  userId,
+  stage,
+  page = 1,
+  limit = 20,
+} = {}) {
   const filter = buildDealsFilter({ userId, stage });
   const skip = (page - 1) * limit;
 
@@ -134,7 +164,9 @@ export async function getDealsKanbanStage({
     filter = withKanbanAnchor(baseFilter, anchor);
   }
 
-  let query = Deal.find(filter).sort(KANBAN_SORT).limit(limit + 1);
+  let query = Deal.find(filter)
+    .sort(KANBAN_SORT)
+    .limit(limit + 1);
   if (!afterId && page > 1) {
     query = query.skip((page - 1) * limit);
   }
@@ -239,14 +271,41 @@ export async function updateDeal(id, data, { actorId } = {}) {
     ...safeData
   } = data;
 
-  const deal = await Deal.findByIdAndUpdate(id, safeData, { new: true });
-  if (!deal) return null;
+  // 1. Сначала находим старую сделку, какая она была в базе до изменений
+  const oldDeal = await Deal.findById(id);
+  if (!oldDeal) return null;
 
-  const managerId = deal.managerId || deal.createdBy;
-  const verb = deal.stage === 'closed' ? 'Closed deal' : 'Updated deal';
-  await recordDealActivity({ verb, deal, actorId: actorId || managerId });
+  // 2. Делаем апдейт
+  const updatedDeal = await Deal.findByIdAndUpdate(id, safeData, { new: true });
+  if (!updatedDeal) return null;
 
-  return await attachManagerNames(deal);
+  // 3. Проверяем, изменилось ли вообще хоть что-нибудь важное
+  const isStageChanged = oldDeal.stage !== updatedDeal.stage;
+  const isNameChanged = oldDeal.name !== updatedDeal.name;
+  const isAmountChanged = oldDeal.amount !== updatedDeal.amount;
+
+  // Записываем активность только если реально были изменения!
+  if (isStageChanged || isNameChanged || isAmountChanged) {
+    let verb = 'Updated deal';
+    
+    // Если изменилась стадия, сделаем лог красивым и понятным
+    if (isStageChanged) {
+      if (updatedDeal.stage === 'closed') {
+        verb = 'Closed deal';
+      } else {
+        verb = `Moved to "${updatedDeal.stage}"`;
+      }
+    }
+
+    const managerId = updatedDeal.managerId || updatedDeal.createdBy;
+    await recordDealActivity({ 
+      verb, 
+      deal: updatedDeal, 
+      actorId: actorId || managerId 
+    });
+  }
+
+  return await attachManagerNames(updatedDeal);
 }
 
 export async function deleteDeal(id) {

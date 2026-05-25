@@ -29,6 +29,7 @@ function formatError(err) {
 
 const emptyForm = {
   name: '',
+  lastName: '',
   company: '',
   email: '',
   phone: '',
@@ -130,6 +131,7 @@ export default function Customers() {
     try {
       const payload = {
         name: form.name.trim(),
+        lastName: form.lastName.trim(),
         company: form.company.trim(),
         email: form.email.trim(),
         status: form.status,
@@ -274,6 +276,7 @@ export default function Customers() {
           <tbody>
             {clients.map((c) => {
               const st = statusMap[c.status] || statusMap.cold;
+              const fullName = c.lastName ? `${c.name} ${c.lastName}` : c.name;
               const isSelected = selected.includes(c.id);
               return (
                 <tr
@@ -305,9 +308,9 @@ export default function Customers() {
                           color: st.color,
                         }}
                       >
-                        {c.name?.charAt(0) || '?'}
+                        {fullName?.charAt(0) || '?'}
                       </div>
-                      <span style={styles.clientName}>{c.name}</span>
+                      <span style={styles.clientName}>{fullName}</span>
                     </div>
                   </td>
                   <td style={styles.td}>
@@ -466,6 +469,18 @@ export default function Customers() {
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   required
+                />
+              </div>
+
+              <div style={styles.field}>
+                <label style={styles.label} htmlFor="client-lastname">
+                  Last name
+                </label>
+                <input
+                  id="client-lastname"
+                  style={styles.input}
+                  value={form.lastName}
+                  onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
                 />
               </div>
 

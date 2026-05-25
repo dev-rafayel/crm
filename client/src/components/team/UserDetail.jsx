@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import cardStyles from '../customerCard/style';
 import fmt from '../../fmt';
 import { getUserById, updateUserStatus } from '../../api/users.api.js';
@@ -42,6 +42,7 @@ function formatStatus(status) {
 
 export default function UserDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'admin';
   const currentUserId = String(currentUser?.id ?? currentUser?._id ?? '');
@@ -71,7 +72,10 @@ export default function UserDetail() {
     setBlockError('');
 
     if (member.id === currentUserId) {
-      setBlockModal({ type: 'error', message: 'You cannot block your own account.' });
+      setBlockModal({
+        type: 'error',
+        message: 'You cannot block your own account.',
+      });
       return;
     }
 
@@ -188,7 +192,11 @@ export default function UserDetail() {
             onClick={openBlockModal}
             disabled={statusLoading}
           >
-            {statusLoading ? 'Processing…' : isActive ? 'Block employee' : 'Unblock employee'}
+            {statusLoading
+              ? 'Processing…'
+              : isActive
+                ? 'Block employee'
+                : 'Unblock employee'}
           </button>
         )}
       </div>
@@ -236,7 +244,7 @@ export default function UserDetail() {
     <div style={cardStyles.page}>
       <div style={cardStyles.breadcrumb}>
         <Link to="/team" style={cardStyles.breadLink}>
-          Team
+          ← Team
         </Link>
         <span style={cardStyles.breadSep}>›</span>
         <span style={cardStyles.breadCurrent}>{member.name}</span>
@@ -253,7 +261,9 @@ export default function UserDetail() {
                 style={{
                   ...cardStyles.tabBtn,
                   borderBottom:
-                    tab === 'deals' ? '2px solid #3B82F6' : '2px solid transparent',
+                    tab === 'deals'
+                      ? '2px solid #3B82F6'
+                      : '2px solid transparent',
                   color: tab === 'deals' ? '#3B82F6' : '#64748B',
                   fontWeight: tab === 'deals' ? 600 : 400,
                 }}
@@ -270,12 +280,21 @@ export default function UserDetail() {
                       <div
                         key={d._id || d.id}
                         className="crm-deal-row"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => navigate(`/deals/${d._id || d.id}`)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            navigate(`/deals/${d._id || d.id}`);
+                          }
+                        }}
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
                           padding: '12px 0',
                           borderBottom: '1px solid #F1F5F9',
+                          cursor: 'pointer',
                         }}
                       >
                         <div>
@@ -289,11 +308,23 @@ export default function UserDetail() {
                           >
                             {d.name}
                           </p>
-                          <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>
+                          <p
+                            style={{
+                              fontSize: 12,
+                              color: '#94A3B8',
+                              margin: 0,
+                            }}
+                          >
                             {d.company}
                           </p>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12,
+                          }}
+                        >
                           <p
                             style={{
                               fontSize: 14,
@@ -321,7 +352,13 @@ export default function UserDetail() {
                     ))}
                   </div>
                 ) : (
-                  <div style={{ padding: '24px', color: '#64748B', textAlign: 'center' }}>
+                  <div
+                    style={{
+                      padding: '24px',
+                      color: '#64748B',
+                      textAlign: 'center',
+                    }}
+                  >
                     No deals for this manager
                   </div>
                 ))}
@@ -333,7 +370,11 @@ export default function UserDetail() {
       )}
 
       {blockModal && (
-        <div style={cardStyles.overlay} role="presentation" onClick={closeBlockModal}>
+        <div
+          style={cardStyles.overlay}
+          role="presentation"
+          onClick={closeBlockModal}
+        >
           <div
             style={{ ...cardStyles.modal, maxWidth: 420 }}
             role="alertdialog"
@@ -346,8 +387,16 @@ export default function UserDetail() {
                 width: 48,
                 height: 48,
                 borderRadius: '50%',
-                background: isBlockError ? '#FEF2F2' : blocking ? '#FEF2F2' : '#ECFDF5',
-                color: isBlockError ? '#DC2626' : blocking ? '#DC2626' : '#059669',
+                background: isBlockError
+                  ? '#FEF2F2'
+                  : blocking
+                    ? '#FEF2F2'
+                    : '#ECFDF5',
+                color: isBlockError
+                  ? '#DC2626'
+                  : blocking
+                    ? '#DC2626'
+                    : '#059669',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -358,7 +407,10 @@ export default function UserDetail() {
               {isBlockError ? '!' : blocking ? '⛔' : '✓'}
             </div>
 
-            <h2 id="block-modal-title" style={{ ...cardStyles.modalTitle, marginBottom: 8 }}>
+            <h2
+              id="block-modal-title"
+              style={{ ...cardStyles.modalTitle, marginBottom: 8 }}
+            >
               {isBlockError
                 ? 'Action not allowed'
                 : blocking
@@ -368,7 +420,12 @@ export default function UserDetail() {
 
             <p
               id="block-modal-desc"
-              style={{ fontSize: 14, color: '#64748B', lineHeight: 1.55, margin: '0 0 20px' }}
+              style={{
+                fontSize: 14,
+                color: '#64748B',
+                lineHeight: 1.55,
+                margin: '0 0 20px',
+              }}
             >
               {isBlockError
                 ? blockModal.message
@@ -378,7 +435,9 @@ export default function UserDetail() {
             </p>
 
             {blockError && (
-              <p style={{ ...cardStyles.errorBox, marginBottom: 16 }}>{blockError}</p>
+              <p style={{ ...cardStyles.errorBox, marginBottom: 16 }}>
+                {blockError}
+              </p>
             )}
 
             <div style={cardStyles.modalActions}>

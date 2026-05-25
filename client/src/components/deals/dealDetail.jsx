@@ -13,6 +13,8 @@ export default function DealDetail({ dealId, onBack, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
@@ -36,19 +38,29 @@ export default function DealDetail({ dealId, onBack, onUpdate, onDelete }) {
 
   const handleDelete = async () => {
     if (!isAdmin) return;
-    if (!window.confirm(`Delete deal "${deal?.name}"? This cannot be undone.`)) return;
+    setDeleteError('');
+    setConfirmDeleteOpen(true);
+  };
 
+  const confirmDelete = async () => {
     setDeleteLoading(true);
+    setDeleteError('');
     try {
       await deleteDeal(dealId);
       if (onDelete) onDelete(dealId);
       onBack();
     } catch (error) {
       console.error('Failed to delete deal:', error);
-      alert(error.message || 'Failed to delete deal');
+      setDeleteError(error.message || 'Failed to delete deal');
     } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const cancelDelete = () => {
+    if (deleteLoading) return;
+    setDeleteError('');
+    setConfirmDeleteOpen(false);
   };
 
   const handleSave = async () => {
@@ -387,6 +399,73 @@ export default function DealDetail({ dealId, onBack, onUpdate, onDelete }) {
           </>
         )}
       </div>
+
+      {confirmDeleteOpen && (
+        <div
+          style={styles.modalOverlay}
+          role="presentation"
+          onClick={cancelDelete}
+        >
+          <div
+            style={styles.modal}
+            role="alertdialog"
+            aria-labelledby="confirm-delete-title"
+            aria-describedby="confirm-delete-desc"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="confirm-delete-title" style={styles.modalTitle}>
+              Delete deal?
+            </h2>
+            <p
+              id="confirm-delete-desc"
+              style={{
+                fontSize: 14,
+                color: '#475569',
+                lineHeight: 1.5,
+                margin: '0 0 20px',
+              }}
+            >
+              This action cannot be undone. Are you sure you want to delete "
+              {deal.name}"?
+            </p>
+            {deleteError && (
+              <p style={{ color: '#B91C1C', margin: '0 0 16px', fontSize: 13 }}>
+                {deleteError}
+              </p>
+            )}
+            <div style={styles.modalActions}>
+              <button
+                type="button"
+                className="crm-btn-secondary"
+                style={styles.btnSecondary}
+                onClick={cancelDelete}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="crm-btn-danger"
+                style={{
+                  padding: '8px 18px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  background: '#DC2626',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: deleteLoading ? 'not-allowed' : 'pointer',
+                  opacity: deleteLoading ? 0.7 : 1,
+                }}
+                onClick={confirmDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 const clientFieldsSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   company: z.string().min(1, 'Company is required').max(100),
+  lastName: z.string().trim().max(100).optional(),
   email: z.string().email('Invalid email format'),
   phone: z.string().regex(/^\+?[1-9]\d{6,14}$/, 'Phone number must be in international E.164 format with minimum 7 digits.').optional(),
   status: z.enum(['hot', 'warm', 'cold']).optional(),

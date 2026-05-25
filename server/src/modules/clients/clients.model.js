@@ -20,6 +20,11 @@ const clientSchema = new Schema(
       trim: true,
       match: [/\S+@\S+\.\S+/, 'Email format is invalid.'],
     },
+    lastName: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
     phone: {
       type: String,
       trim: true,

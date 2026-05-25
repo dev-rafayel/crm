@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import cardStyles from '../customerCard/style';
 import { statusMap } from './style';
 import fmt from '../../fmt';
@@ -55,6 +55,7 @@ export default function ClientDetail() {
   const [tab, setTab] = useState('activity');
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const [dealModalOpen, setDealModalOpen] = useState(false);
   const [dealName, setDealName] = useState('');
   const [dealAmount, setDealAmount] = useState('');
@@ -155,13 +156,15 @@ export default function ClientDetail() {
   }
 
   const st = statusMap[client.status] || statusMap.cold;
-  const totalAmount = client.deals ? client.deals.reduce((s, d) => s + (d.amount || 0), 0) : 0;
+  const totalAmount = client.deals
+    ? client.deals.reduce((s, d) => s + (d.amount || 0), 0)
+    : 0;
 
   return (
     <div style={cardStyles.page}>
       <div style={cardStyles.breadcrumb}>
         <Link to="/clients" style={cardStyles.breadLink}>
-          Clients
+          ← Clients
         </Link>
         <span style={cardStyles.breadSep}>›</span>
         <span style={cardStyles.breadCurrent}>{client.name}</span>
@@ -227,12 +230,16 @@ export default function ClientDetail() {
 
           <div style={cardStyles.statsRow}>
             <div style={cardStyles.statItem}>
-              <p style={cardStyles.statVal}>{client.deals ? client.deals.length : 0}</p>
+              <p style={cardStyles.statVal}>
+                {client.deals ? client.deals.length : 0}
+              </p>
               <p style={cardStyles.statLabel}>Deals</p>
             </div>
             <div style={cardStyles.statDivider} />
             <div style={cardStyles.statItem}>
-              <p style={{ ...cardStyles.statVal, color: '#3B82F6' }}>{fmt(totalAmount)}</p>
+              <p style={{ ...cardStyles.statVal, color: '#3B82F6' }}>
+                {fmt(totalAmount)}
+              </p>
               <p style={cardStyles.statLabel}>Total value</p>
             </div>
           </div>
@@ -280,7 +287,13 @@ export default function ClientDetail() {
                   </div>
                 ))
               ) : (
-                <div style={{ padding: '24px', color: '#64748B', textAlign: 'center' }}>
+                <div
+                  style={{
+                    padding: '24px',
+                    color: '#64748B',
+                    textAlign: 'center',
+                  }}
+                >
                   No activity history
                 </div>
               )}
@@ -306,12 +319,21 @@ export default function ClientDetail() {
                     <div
                       key={d._id || d.id}
                       className="crm-deal-row"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => navigate(`/deals/${d._id || d.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          navigate(`/deals/${d._id || d.id}`);
+                        }
+                      }}
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '12px 0',
                         borderBottom: '1px solid #F1F5F9',
+                        cursor: 'pointer',
                       }}
                     >
                       <div>
@@ -325,11 +347,19 @@ export default function ClientDetail() {
                         >
                           {d.name}
                         </p>
-                        <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>
+                        <p
+                          style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}
+                        >
                           {d.managerName || 'Unassigned'}
                         </p>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                        }}
+                      >
                         <p
                           style={{
                             fontSize: 14,
@@ -357,7 +387,13 @@ export default function ClientDetail() {
                   ))}
                 </div>
               ) : (
-                <div style={{ padding: '24px', color: '#64748B', textAlign: 'center' }}>
+                <div
+                  style={{
+                    padding: '24px',
+                    color: '#64748B',
+                    textAlign: 'center',
+                  }}
+                >
                   No deals found
                 </div>
               )}
@@ -367,7 +403,11 @@ export default function ClientDetail() {
       </div>
 
       {dealModalOpen && (
-        <div style={cardStyles.overlay} role="presentation" onClick={closeDealModal}>
+        <div
+          style={cardStyles.overlay}
+          role="presentation"
+          onClick={closeDealModal}
+        >
           <div
             style={cardStyles.modal}
             role="dialog"
@@ -437,5 +477,4 @@ export default function ClientDetail() {
       )}
     </div>
   );
-
 }

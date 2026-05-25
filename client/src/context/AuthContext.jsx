@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import * as authApi from '../api/auth.api.js';
-import * as usersApi from '../api/users.api.js';
 import { getAccessToken } from '../api/client.js';
 
 const AuthContext = createContext(null);
@@ -56,13 +55,6 @@ export function AuthProvider({ children }) {
     return loggedInUser;
   }, []);
 
-  const register = useCallback(async (data) => {
-    await usersApi.register(data);
-    const loggedInUser = await authApi.login(data.email, data.password);
-    setUser(loggedInUser);
-    return loggedInUser;
-  }, []);
-
   const logout = useCallback(async () => {
     await authApi.logout();
     setUser(null);
@@ -72,7 +64,6 @@ export function AuthProvider({ children }) {
     user,
     loading,
     login,
-    register,
     logout,
     getDisplayName,
     getInitials,

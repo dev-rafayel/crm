@@ -2,16 +2,14 @@ import { Router } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate, authorize } from '../auth/auth.middleware.js';
-import { createUserSchema, updateUserStatusSchema } from './users.validator.js';
+import { updateUserStatusSchema } from './users.validator.js';
 import {
-  createUser,
   listUsers,
   deleteUser,
   getUserByIdForViewer,
   updateUserStatus,
 } from './users.service.js';
 import { RoleNames } from '../../constants.js';
-import { AppError } from '../../utils/AppError.js';
 
 const router = Router();
 
@@ -45,14 +43,6 @@ router.patch(
     res.json({ success: true, data });
   }),
 );
-
-router.post('/', validate(createUserSchema), asyncHandler(async (req, res) => {
-  const user = await createUser(req.body);
-  if (!user) {
-    throw new AppError('Failed to create user', 500);
-  }
-  res.status(201).json({ success: true, data: user });
-}));
 
 router.delete(
   '/:id',

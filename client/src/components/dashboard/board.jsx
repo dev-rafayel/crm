@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import styles from './style';
-import { API_URL } from '../config/api'
+import { API_URL } from '../../api/auth.api.js';
 
 export default function Dashboard() {
   const [activeMetric, setActiveMetric] = useState(null);

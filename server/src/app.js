@@ -11,9 +11,27 @@ export function createApp() {
   const app = express();
 
   app.use(helmet());
+
+  // Массив всех разрешенных адресов
+  const allowedOrigins = [
+    'http://localhost:5173',          // Локальный фронт Vite
+    'http://localhost:3000',          // На всякий случай обычный React
+    env.CLIENT_URL,                   // Твой домен из .env (https://raf-salecrm.online)
+    'https://www.raf-salecrm.online'  // Версия с www
+  ].filter(Boolean); // Очистит массив от undefined, если env.CLIENT_URL не задан
+
   app.use(
     cors({
-      origin: env.CLIENT_URL,
+      origin: function (origin, callback) {
+        // Разрешаем запросы без origin (например, Postman или мобильные приложения)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+          callback(null, true);
+        } else {
+          callback(new Error('Blocked by CORS'));
+        }
+      },
       credentials: true,
     }),
   );

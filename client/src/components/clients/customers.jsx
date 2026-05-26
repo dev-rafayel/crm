@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles, { statusMap } from './style';
 import fmt from '../../fmt';
-import { getClients, createClient, deleteClient } from '../../api/clients.api.js';
+import {
+  getClients,
+  createClient,
+  deleteClient,
+} from '../../api/clients.api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import Pagination from './Pagination.jsx';
 
@@ -32,7 +36,7 @@ const emptyForm = {
   lastName: '',
   company: '',
   email: '',
-  phone: '',
+  phoneNumber: '',
   status: 'warm',
 };
 
@@ -112,7 +116,8 @@ export default function Customers() {
   }
 
   function goToPage(page) {
-    if (page < 1 || page > pagination.totalPages || page === currentPage) return;
+    if (page < 1 || page > pagination.totalPages || page === currentPage)
+      return;
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -121,10 +126,14 @@ export default function Customers() {
     e.preventDefault();
     setFormError('');
 
-    const phone = form.phone.trim();
-    if (phone && !PHONE_REGEX.test(normalizePhone(phone))) {
-      setFormError('Enter a valid international phone number, e.g. +37499123456');
-      return;
+    const phone = form.phoneNumber.trim();
+    let fullPhone = '';
+    if (phone) {
+      fullPhone = `+374${phone.replace(/\D/g, '')}`;
+      if (!/^\+374\d{8}$/.test(fullPhone)) {
+        setFormError('Enter a valid Armenian phone: 8 digits after +374.');
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -136,7 +145,7 @@ export default function Customers() {
         email: form.email.trim(),
         status: form.status,
       };
-      if (phone) payload.phone = normalizePhone(phone);
+      if (fullPhone) payload.phone = fullPhone;
 
       await createClient(payload);
       setModalOpen(false);
@@ -159,7 +168,8 @@ export default function Customers() {
   }
 
   async function confirmBulkDelete() {
-    if (!isAdmin || selected.length === 0 || deleteModal?.type !== 'confirm') return;
+    if (!isAdmin || selected.length === 0 || deleteModal?.type !== 'confirm')
+      return;
 
     setDeleting(true);
     try {
@@ -255,13 +265,23 @@ export default function Customers() {
         )}
       </div>
 
-      <div style={{ ...styles.tableWrap, opacity: listLoading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+      <div
+        style={{
+          ...styles.tableWrap,
+          opacity: listLoading ? 0.6 : 1,
+          transition: 'opacity 0.2s',
+        }}
+      >
         <table style={styles.table}>
           <thead>
             <tr>
               {isAdmin && (
                 <th style={{ ...styles.th, width: 36 }}>
-                  <input type="checkbox" style={{ cursor: 'pointer' }} readOnly />
+                  <input
+                    type="checkbox"
+                    style={{ cursor: 'pointer' }}
+                    readOnly
+                  />
                 </th>
               )}
               <th style={styles.th}>Client</th>
@@ -338,7 +358,10 @@ export default function Customers() {
                       {st.label}
                     </span>
                   </td>
-                  <td style={{ ...styles.td, textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
+                  <td
+                    style={{ ...styles.td, textAlign: 'right' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       type="button"
                       className="crm-btn-ghost"
@@ -364,7 +387,11 @@ export default function Customers() {
       </div>
 
       {deleteModal && (
-        <div style={styles.overlay} role="presentation" onClick={closeDeleteModal}>
+        <div
+          style={styles.overlay}
+          role="presentation"
+          onClick={closeDeleteModal}
+        >
           <div
             style={{ ...styles.modal, maxWidth: 420 }}
             role="alertdialog"
@@ -377,7 +404,8 @@ export default function Customers() {
                 width: 48,
                 height: 48,
                 borderRadius: '50%',
-                background: deleteModal.type === 'error' ? '#FEF2F2' : '#FEF2F2',
+                background:
+                  deleteModal.type === 'error' ? '#FEF2F2' : '#FEF2F2',
                 color: '#DC2626',
                 display: 'flex',
                 alignItems: 'center',
@@ -452,7 +480,10 @@ export default function Customers() {
             aria-labelledby="new-client-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="new-client-title" style={{ ...styles.heading, fontSize: 18, marginBottom: 20 }}>
+            <h2
+              id="new-client-title"
+              style={{ ...styles.heading, fontSize: 18, marginBottom: 20 }}
+            >
               New customer
             </h2>
 
@@ -467,7 +498,9 @@ export default function Customers() {
                   id="client-name"
                   style={styles.input}
                   value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
                   required
                 />
               </div>
@@ -480,7 +513,9 @@ export default function Customers() {
                   id="client-lastname"
                   style={styles.input}
                   value={form.lastName}
-                  onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, lastName: e.target.value }))
+                  }
                 />
               </div>
 
@@ -492,7 +527,9 @@ export default function Customers() {
                   id="client-company"
                   style={styles.input}
                   value={form.company}
-                  onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, company: e.target.value }))
+                  }
                   required
                 />
               </div>
@@ -506,23 +543,55 @@ export default function Customers() {
                   style={styles.input}
                   type="email"
                   value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, email: e.target.value }))
+                  }
                   required
                 />
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label} htmlFor="client-phone">
-                  Phone (optional)
+                <label style={styles.label} htmlFor="client-phone-arm">
+                  Phone (Armenia, optional)
                 </label>
-                <input
-                  id="client-phone"
-                  style={styles.input}
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  placeholder="+37499123456"
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      background: '#F3F4F6',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '8px 0 0 8px',
+                      padding: '0 10px',
+                      height: 40,
+                      fontSize: 15,
+                    }}
+                  >
+                    <span style={{ fontSize: 18, marginRight: 4 }}>🇦🇲</span>{' '}
+                    +374
+                  </span>
+                  <input
+                    id="client-phone-arm"
+                    style={{
+                      ...styles.input,
+                      borderRadius: '0 8px 8px 0',
+                      borderLeft: 'none',
+                      width: '100%',
+                    }}
+                    type="tel"
+                    value={form.phoneNumber}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        phoneNumber: e.target.value
+                          .replace(/\D/g, '')
+                          .slice(0, 8),
+                      }))
+                    }
+                    placeholder="99123456"
+                    maxLength={8}
+                  />
+                </div>
               </div>
 
               <div style={styles.field}>
@@ -533,7 +602,9 @@ export default function Customers() {
                   id="client-status"
                   style={styles.input}
                   value={form.status}
-                  onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, status: e.target.value }))
+                  }
                 >
                   <option value="hot">Aware</option>
                   <option value="warm">Unaware</option>

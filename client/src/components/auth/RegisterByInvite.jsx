@@ -110,7 +110,8 @@ export default function RegisterByInvite() {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
+  // phone split: only number part, prefix is always +374
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -125,11 +126,9 @@ export default function RegisterByInvite() {
       return;
     }
 
-    const normalizedPhone = normalizePhone(phone);
-    if (!isValidPhone(phone)) {
-      setError(
-        'Enter a valid international phone number, e.g. +37499123456 (at least 7 digits after the country code).',
-      );
+    const fullPhone = `+374${phoneNumber.replace(/\D/g, '')}`;
+    if (!/^\+374\d{8}$/.test(fullPhone)) {
+      setError('Enter a valid Armenian phone: 8 digits after +374.');
       return;
     }
 
@@ -149,7 +148,7 @@ export default function RegisterByInvite() {
         token,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phone: normalizedPhone,
+        phone: fullPhone,
         password,
       });
 
@@ -209,19 +208,43 @@ export default function RegisterByInvite() {
           </div>
 
           <div style={field}>
-            <label style={label} htmlFor="invite-phone">
-              Phone number
+            <label style={label} htmlFor="invite-phone-arm">
+              Phone (Armenia)
             </label>
-            <input
-              id="invite-phone"
-              style={input}
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+37499123456"
-              required
-              autoComplete="tel"
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: '#F3F4F6',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '8px 0 0 8px',
+                  padding: '0 10px',
+                  height: 40,
+                  fontSize: 15,
+                }}
+              >
+                <span style={{ fontSize: 18, marginRight: 4 }}>🇦🇲</span> +374
+              </span>
+              <input
+                id="invite-phone-arm"
+                style={{
+                  ...input,
+                  borderRadius: '0 8px 8px 0',
+                  borderLeft: 'none',
+                  width: '100%',
+                }}
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) =>
+                  setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 8))
+                }
+                placeholder="99123456"
+                required
+                autoComplete="tel"
+                maxLength={8}
+              />
+            </div>
           </div>
 
           <div style={field}>
